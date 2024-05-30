@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	typeStr = component.MustNewType("nuvlaedge-otc-receiver")
+	typeStr = component.MustNewType("nuvlaedge_otc_receiver")
 )
 
 const (
