@@ -121,12 +121,12 @@ func newNuvlaedgeOTCReceiver(cfg *Config, set *receiver.CreateSettings, nextCons
 }
 
 func (r *nuvledgeOTCReceiver) startGRPCServer(host component.Host) error {
-	if r.cfg.OTLPConfig.GRPC == nil {
+	if r.cfg.GRPC == nil {
 		return nil
 	}
 
 	var err error
-	if r.serverGRPC, err = r.cfg.OTLPConfig.GRPC.ToServer(context.Background(), host, r.settings.TelemetrySettings); err != nil {
+	if r.serverGRPC, err = r.cfg.GRPC.ToServer(context.Background(), host, r.settings.TelemetrySettings); err != nil {
 		return err
 	}
 
@@ -137,9 +137,9 @@ func (r *nuvledgeOTCReceiver) startGRPCServer(host component.Host) error {
 		})
 	}
 
-	r.settings.Logger.Info("Starting GRPC server", zap.String("endpoint", r.cfg.OTLPConfig.GRPC.NetAddr.Endpoint))
+	r.settings.Logger.Info("Starting GRPC server", zap.String("endpoint", r.cfg.GRPC.NetAddr.Endpoint))
 	var gln net.Listener
-	if gln, err = r.cfg.OTLPConfig.GRPC.NetAddr.Listen(context.Background()); err != nil {
+	if gln, err = r.cfg.GRPC.NetAddr.Listen(context.Background()); err != nil {
 		return err
 	}
 
@@ -156,7 +156,7 @@ func (r *nuvledgeOTCReceiver) startGRPCServer(host component.Host) error {
 }
 
 func (r *nuvledgeOTCReceiver) startHTTPServer(ctx context.Context, host component.Host) error {
-	if r.cfg.OTLPConfig.HTTP == nil {
+	if r.cfg.HTTP == nil {
 		return nil
 	}
 	httpMux := http.NewServeMux()
@@ -165,19 +165,19 @@ func (r *nuvledgeOTCReceiver) startHTTPServer(ctx context.Context, host componen
 			nextConsumer: r.nextMetrics,
 			obsreport:    r.obsrepHTTP,
 		}
-		httpMux.HandleFunc(r.cfg.OTLPConfig.HTTP.MetricsURLPath, func(resp http.ResponseWriter, req *http.Request) {
+		httpMux.HandleFunc(defaultMetricsURLPath, func(resp http.ResponseWriter, req *http.Request) {
 			handleMetrics(resp, req, httpMetricsReceiver)
 		})
 	}
 
 	var err error
-	if r.serverHTTP, err = r.cfg.OTLPConfig.HTTP.ToServer(ctx, host, r.settings.TelemetrySettings, httpMux, confighttp.WithErrorHandler(errorHandler)); err != nil {
+	if r.serverHTTP, err = r.cfg.HTTP.ToServer(ctx, host, r.settings.TelemetrySettings, httpMux, confighttp.WithErrorHandler(errorHandler)); err != nil {
 		return err
 	}
 
-	r.settings.Logger.Info("Starting HTTP server", zap.String("endpoint", r.cfg.OTLPConfig.HTTP.ServerConfig.Endpoint))
+	r.settings.Logger.Info("Starting HTTP server", zap.String("endpoint", r.cfg.HTTP.Endpoint))
 	var hln net.Listener
-	if hln, err = r.cfg.OTLPConfig.HTTP.ServerConfig.ToListener(ctx); err != nil {
+	if hln, err = r.cfg.HTTP.ToListener(ctx); err != nil {
 		return err
 	}
 

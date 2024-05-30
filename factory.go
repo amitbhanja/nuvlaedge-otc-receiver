@@ -9,7 +9,6 @@ import (
 	"go.opentelemetry.io/collector/config/confignet"
 	"go.opentelemetry.io/collector/consumer"
 	"go.opentelemetry.io/collector/receiver"
-	"go.opentelemetry.io/collector/receiver/otlpreceiver"
 )
 
 var (
@@ -19,8 +18,6 @@ var (
 const (
 	grpcPort = 4317
 	httpPort = 4318
-
-	defaultMetricsURLPath = "/v1/metrics"
 )
 
 func NewFactory() receiver.Factory {
@@ -33,21 +30,16 @@ func NewFactory() receiver.Factory {
 
 func createDefaultConfig() component.Config {
 	return &Config{
-		OTLPConfig: otlpreceiver.Config{
-			Protocols: otlpreceiver.Protocols{
-				GRPC: &configgrpc.ServerConfig{
-					NetAddr: confignet.AddrConfig{
-						Endpoint:  fmt.Sprintf("%s:%d", "0.0.0.0", grpcPort),
-						Transport: confignet.TransportTypeTCP,
-					},
-					ReadBufferSize: 512 * 1024,
+		Protocols: Protocols{
+			GRPC: &configgrpc.ServerConfig{
+				NetAddr: confignet.AddrConfig{
+					Endpoint:  fmt.Sprintf("%s:%d", "0.0.0.0", grpcPort),
+					Transport: confignet.TransportTypeTCP,
 				},
-				HTTP: &otlpreceiver.HTTPConfig{
-					ServerConfig: &confighttp.ServerConfig{
-						Endpoint: fmt.Sprintf("%s:%d", "0.0.0.0", httpPort),
-					},
-					MetricsURLPath: defaultMetricsURLPath,
-				},
+				ReadBufferSize: 512 * 1024,
+			},
+			HTTP: &confighttp.ServerConfig{
+				Endpoint: fmt.Sprintf("%s:%d", "0.0.0.0", httpPort),
 			},
 		},
 		RestrictedMetrics: []string{},
