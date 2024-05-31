@@ -220,6 +220,18 @@ func (r *nuvledgeOTCReceiver) Shutdown(ctx context.Context) error {
 	r.shutdownWG.Wait()
 	return err
 }
+func getServiceName(md *pmetric.Metrics) string {
+	rms := md.ResourceMetrics()
+	for i := 0; i < rms.Len(); i++ {
+		rm := rms.At(i)
+		resource := rm.Resource()
+		attrs := resource.Attributes()
+		if serviceName, ok := attrs.Get("service.name"); ok {
+			return serviceName.Str()
+		}
+	}
+	return ""
+}
 
 func (r *nuvlaedgeConsumer) ConsumeMetrics(ctx context.Context, md pmetric.Metrics) error {
 	newMd := pmetric.NewMetrics()
@@ -229,6 +241,8 @@ func (r *nuvlaedgeConsumer) ConsumeMetrics(ctx context.Context, md pmetric.Metri
 	} else {
 		r.settings.Logger.Info("Received Metrics ", zap.String("metrics", string(jsonData)))
 	}
+	serviceName := getServiceName(&md)
+
 	rms := md.ResourceMetrics()
 	for i := 0; i < rms.Len(); i++ {
 		rm := rms.At(i)
@@ -247,6 +261,9 @@ func (r *nuvlaedgeConsumer) ConsumeMetrics(ctx context.Context, md pmetric.Metri
 				forward := true
 				r.settings.Logger.Info("Checking metric ", zap.String("name", m.Name()))
 				for _, restrictedMetric := range r.restrictedMetrics {
+					if serviceName != "" {
+						restrictedMetric = serviceName + "_" + restrictedMetric
+					}
 					if m.Name() == restrictedMetric {
 						forward = false
 						break
