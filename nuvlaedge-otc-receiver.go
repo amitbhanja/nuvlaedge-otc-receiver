@@ -264,6 +264,7 @@ func (r *nuvlaedgeConsumer) ConsumeMetrics(ctx context.Context, md pmetric.Metri
 					if serviceName != "" {
 						restrictedMetric = serviceName + "_" + restrictedMetric
 					}
+					r.settings.Logger.Info("Checking restricted metric ", zap.String("name", restrictedMetric))
 					if m.Name() == restrictedMetric {
 						forward = false
 						break
